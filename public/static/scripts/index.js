@@ -83,6 +83,15 @@ const noteId = (function () {
   }
 })()*/
 
+function errorAlert(msg) {
+  Swal.fire({
+    icon: 'error',
+    title: 'Erro!',
+    text: msg,
+    footer: ''
+  })
+}
+
 /**
  * Transforms ISO 8601 format date String to a ISO-like locale format.
  * Returns a modified ISO 8601 String.
@@ -101,6 +110,23 @@ function getFormattedDate(noteDate) {
   return formattedDate
 }
 
+function deleteAlert(id) {
+  Swal.fire({
+    title: 'Tem certeza que deseja excluir essa nota?',
+    text: "Você não poderá reverter essa ação!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Sim, excluir!',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.value) {
+      removeNote(id)
+    }
+  })
+}
+
 /**
  * Deletes the selected element and calls the getNotes function.
  */
@@ -111,11 +137,15 @@ function removeNote(id) {
       method: 'DELETE'
     })
     .done(function () {
+      Swal.fire(
+        'Excluída!',
+        'Sua nota foi excluída.',
+        'success'
+      )
       getNotes()
-      alert("SUCCESS: The note has been deleted!")
     })
     .fail(function (error) {
-      alert("ERROR: This note could not be deleted.")
+      errorAlert('Não foi possível excluir a nota.')
       console.log(error)
     })
 }
@@ -139,11 +169,11 @@ function fillNotes(notes) {
       // noteId.add(note.id)
 
       return `
-        <tr ${note.important == 'true' ? 'class="important"' : ''}>
-          <td>${getFormattedDate(note.date)}</td>
-          <td>${note.content}</td>
+        <tr>
+          <td${note.important == 'true' ? ' class="important"' : ''}>${getFormattedDate(note.date)}</td>
+          <td${note.important == 'true' ? ' class="important"' : ''}>${note.content}</td>
           <td><a id="edit-${note.id}" href="register.html?${note.id}">Editar</a></td>
-          <td><button id="del-${note.id}" class="del" onclick="removeNote(${note.id})">Excluir</button></td>
+          <td><a id="del-${note.id}" href="#" onclick="deleteAlert(${note.id})">Excluir</a></td>
         </tr>`
     })
     .join('')
@@ -161,12 +191,12 @@ function paginate(page, links) {
   function setPagination(first, prev, next, last, pageIndex) {
     const pageLinks = `
       <tr>
-        <td colspan=2>
-          <a id="first-page" href="${first}" >|<<</a>
-          <a id="prev-page" href="${prev}" rel="prev"><</a>
+        <td colspan=4>
+          <a class="btn" id="first-page" href="${first}" >|<<</a>
+          <a class="btn" id="prev-page" href="${prev}" rel="prev"><</a>
           <span>${pageIndex}</span>
-          <a id="next-page" href="${next}" rel="next">></a>
-          <a id="last-page" href="${last}" >>>|</a>
+          <a class="btn" id="next-page" href="${next}" rel="next">></a>
+          <a class="btn" id="last-page" href="${last}" >>>|</a>
         </td>
       </tr>`
 
@@ -219,7 +249,7 @@ function getNotes() {
   const url = window.location.href
 
   // Page receives the false's value in the first request and "true" in the others.
-  const page = url.includes('?_page=') ? new String(url.match(/\?_page=.&_limit=./)) : '?_page=1&_limit=3'
+  const page = url.includes('?_page=') ? new String(url.match(/\?_page=.&_limit=./)) : '?_page=1&_limit=7'
 
   // http://localhost:3000/notes/?_page=.&limit=.&_sort=date,important&_order=desc,desc'
   $.get('/notes/' + page + '&_sort=date,important&_order=desc,desc')
@@ -232,7 +262,7 @@ function getNotes() {
     .fail(function (error) {
       // If it fails, load an error message
       const list = document.querySelector('#list')
-      list.innerHTML = `<tr><td colspan=5>Erro ao carregar a lista!</td></tr>`
+      errorAlert('Erro ao carregar a lista')
       console.log(error)
     });
 }

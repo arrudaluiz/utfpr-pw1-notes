@@ -1,3 +1,22 @@
+function successAlert(msg) {
+  Swal.fire({
+    position: 'top-end',
+    icon: 'success',
+    title: msg,
+    showConfirmButton: false,
+    timer: 1500
+  })
+}
+
+function errorAlert(msg) {
+  Swal.fire({
+    icon: 'error',
+    title: 'Erro!',
+    text: msg,
+    footer: ''
+  })
+}
+
 function getFormattedDate(date) {
   date.setHours(date.getHours() - (date.getTimezoneOffset() / 60))
   date.setMinutes(date.getMinutes())
@@ -32,7 +51,7 @@ function getNote() {
       })
       .fail(function (error) {
         // If it fails, load an error message
-        const list = document.querySelector('#list')
+        errorAlert('Não foi possível carregar a nota.')
         console.log(error)
       });
   }
@@ -41,32 +60,32 @@ function getNote() {
 window.onload = function () {
   loadDate()
   getNote()
-  
+
   document.querySelector("#note-submit").addEventListener('click', handleSubmit)
 }
 
 function putNote(id, data) {
   $.ajax({
-    url: '/notes/' + id,
-    method: 'PUT',
-    data: data
-  })
-  .done(function () {
-    alert("SUCCESS: The note has been updated!")
-  })
-  .fail(function (error) {
-    alert("ERROR: This note could not be updated.")
-    console.log(error)
-  })
+      url: '/notes/' + id,
+      method: 'PUT',
+      data: data
+    })
+    .done(function () {
+      successAlert('A nota foi atualizada com sucesso!')
+    })
+    .fail(function (error) {
+      errorAlert('Não foi possível salvar a nota.')
+      console.log(error)
+    })
 }
 
 function postNote(data) {
   $.post('/notes/', data)
     .done(function () {
-      alert("SUCESSO!")
+      successAlert('A nota foi salva com sucesso!')
     })
     .fail(function (error) {
-      alert("ERRRO!")
+      errorAlert('Não foi possível salvar a nota.')
       console.log(error)
     })
 }
@@ -90,10 +109,24 @@ function handleSubmit(event) {
 
   } else if (window.location.href.includes('?')) {
     const id = window.location.href.split('?').pop()
-    putNote(id, {
-      content: textContent.value,
-      date: date.toISOString(),
-      important: isImportant.checked
+
+    Swal.fire({
+      title: 'Tem certeza que deseja alterar a nota?',
+      text: "Você não poderá reverter essa ação!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sim, alterar!',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.value) {
+        putNote(id, {
+          content: textContent.value,
+          date: date.toISOString(),
+          important: isImportant.checked
+        })
+      }
     })
 
   } else {
