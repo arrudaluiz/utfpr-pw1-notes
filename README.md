@@ -8,7 +8,7 @@ Instale o JSON Server
 npm install -g json-server
 ```
 
-Ininie o JSON Server
+Inicie o JSON Server
 ```
 json-server --watch db.json
 ```
